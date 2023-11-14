@@ -1,0 +1,170 @@
+' **************************************************************************************************** 
+' This script recalculates line spectra in Bruker Data Analysis (DA). 
+'
+' 1) Open script in DA: Click Method -> Open Script Only
+' 2) Run script in DA: Click Method -> Run
+
+' The script will guide you in setting the parameters for the Peak Sum (peak picker) algorithm. The processed
+' files can optionally be exported to mzML files - selected in a window pop up.  
+' 
+' 2023-11-13 Filip Ljung  
+
+' **************************************************************************************************** 
+ 
+Option explicit 'Enable strict variable checks 
+
+Dim newlineChar
+newlineChar = Chr(13) + Chr(10) 'create newline character 
+
+' **************************************************************************************************** 
+' File export options to open formats
+' **************************************************************************************************** 
+Dim SpectraType, Format
+' ## Line vs profile spectrum  
+' daLine -> line spectra 
+' daProfile -> profile spectra 
+SpectraType=daLine
+ 
+' ## Output file format
+' daMzXML -> mzXML 
+' daMzML-> mzML 
+' daMzData -> daMzData 
+Format=daMzML    
+
+' **************************************************************************************************** 
+'# Peak picking parameters (Peak sum algorithm)
+' **************************************************************************************************** 
+Dim DetectionAlgorithm
+DetectionAlgorithm = daSumPeak
+
+' ## Signal 
+Dim signalToNoiseInfo, SignalToNoise
+signalToNoiseInfo = "Signal to noise ratio" + newlineChar + newlineChar + "Enter the S/N (signal-to-noise) threshold a signal must exceed to be used in peak detection. This parameter determines the initial peak detection before the Absolute intensity threshold is applied. Values between 0 and 10,000 are allowed."
+SignalToNoise = 1
+
+' ## Relative intensity to base peak
+Dim RelativeThresholdInfo, RelativeThreshold
+RelativeThresholdInfo = "Relative intensity threshold" + newlineChar + newlineChar + "Enter the intensity threshold relative to the most intense (base) ion of the mass spectrum or the selected mass range a peak must exceed to be included in the Mass List. This threshold is the most important variable in Mass List finding. The minimum value allowed is '0'."
+RelativeThreshold = 0.01
+
+' ## Min intensity
+Dim AbsoluteIntensityInfo, AbsoluteIntensity
+AbsoluteIntensityInfo = "Minimum intensity cutoff" + newlineChar + newlineChar + "Enter the absolute intensity threshold a peak must exceed to be included in the Mass List. The minimum value allowed is 0."
+AbsoluteIntensity = 50
+
+' ## Use same peak width as during acquisition
+Dim SameWidthAsAcquisitionInfo, SameWidthAsAcquisition
+SameWidthAsAcquisitionInfo = "Use same peak width as was used in data acquisition?"
+SameWidthAsAcquisition = 1 ' = Yes
+
+' ## if not using SameWidthAsAcquisition
+Dim ResolutionInfo, Resolution
+ResolutionInfo = "Enter the measured resolving power value of the mass spectrum."
+Resolution = 10000 'm/delta m
+
+Dim FWHMInfo, FWHM
+FWHMInfo = "Enter the measured minimum peak width value in points of the spectrum. [mz value not enabled yet?] "
+FWHM = 3 'ptns
+
+' **************************************************************************************************** 
+' Functions
+' **************************************************************************************************** 
+Dim open_file, newName 
+
+' Function to setup and start a file browser modal
+Function SelectFolder() 
+    Dim shellApp, folder, folders, item 
+    Dim selectedFolder 
+ 
+    Set shellApp = CreateObject("Shell.Application") 
+    Set folder = shellApp.BrowseForFolder(0, "Select output folder", &H4000) 
+ 
+    If Not folder Is Nothing Then 
+        SelectFolder = folder.Self.Path 
+    Else 
+        SelectFolder = "" ' Return an empty string if no folder is selected 
+    End If 
+End Function 
+
+
+' **************************************************************************************************** 
+' Main script
+' **************************************************************************************************** 
+
+' ## Set algo parameters
+Dim Text, Title, ReCalcLineSpec, ParamSelTitle
+Text = "Perform recalculation of line spectra? All files in the 'Analysis list' will be processed." 
+Title = "Line spectra processing" 
+ReCalcLineSpec = MsgBox (Text, vbYesNo + vbQuestion, Title) 
+
+If ReCalcLineSpec = vbYes then 
+    ParamSelTitle = "Peak picking parameters for Sum Peak algorithm"
+    SignalToNoise = InputBox (signalToNoiseInfo, ParamSelTitle, SignalToNoise) 
+    RelativeThreshold = InputBox (RelativeThresholdInfo, ParamSelTitle, RelativeThreshold) 
+    AbsoluteIntensity = InputBox (AbsoluteIntensityInfo, ParamSelTitle, AbsoluteIntensity) 
+
+    SameWidthAsAcquisition = MsgBox (SameWidthAsAcquisitionInfo, vbYesNo + vbQuestion, ParamSelTitle)
+
+    if SameWidthAsAcquisition = vbNo Then
+        Resolution = InputBox (AbsoluteIntensityInfo, ParamSelTitle, Resolution) 
+        FWHM = InputBox (FWHMInfo, ParamSelTitle, FWHM) 
+    End If
+
+    ' ## mzML output
+    Dim exportMzMl, TargetFolder
+    exportMzMl = MsgBox ("Export processed file to mzML", vbYesNo + vbQuestion, "")
+    If exportMzMl = vbYes Then
+        TargetFolder = SelectFolder()
+    End If
+    
+    ' ## Process loaded files
+    Dim fileCount, totalFiles, fileProcMsg, savePath
+    totalFiles = Application.Analyses.Count
+    fileCount = 0
+    For Each open_file in Application.Analyses 
+        fileCount = fileCount + 1
+        If Right(open_file.Name, 2) = ".d" Then 
+            newName = Left(open_file.Name, Len(open_file.Name) - 2) 
+                ' MsgBox newName    
+            fileProcMsg = "Processing file " & fileCount & "(" & totalFiles &")" & newlineChar & newlineChar & newName & newlineChar
+            
+            Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Recalculating line spectra ..."
+                
+            ' Set algo for peak picking of mass spectrum signals
+            open_file.Method.MassListParameters.DetectionAlgorithm = DetectionAlgorithm
+
+            ' Set algo parameters   
+            open_file.Method.MassListParameters.SameWidthAsAcquisition = SameWidthAsAcquisition
+            open_file.Method.MassListParameters.SignalToNoise = SignalToNoise
+            open_file.Method.MassListParameters.AbsoluteIntensity = AbsoluteIntensity
+            open_file.Method.MassListParameters.RelativeThreshold = RelativeThreshold
+
+            ' Perform recalculation
+            open_file.RecalculateLineSpectra
+
+            ' Save new state to file
+            Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Saving ..."
+            open_file.Save
+                
+            ' MsgBox open_file.Method.MassListParameters.DetectionAlgorithm
+            ' MsgBox open_file.Method.MassListParameters.SameWidthAsAcquisition
+            ' MsgBox open_file.Method.MassListParameters.SignalToNoise
+            ' MsgBox open_file.Method.MassListParameters.AbsoluteIntensity
+            ' MsgBox open_file.Method.MassListParameters.RelativeThreshold
+            
+            If exportMzMl = vbYes Then
+                Application.ShowMessage fileProcMsg + newlineChar + "Exporting to mzML ..."  
+                savePath = TargetFolder + "\" + newName + ".mzML"
+                open_file.Export savePath, Format, SpectraType 
+            End If
+
+            Application.HideMessage 
+    
+        End If 
+    Next 
+
+End If
+
+
+
+form.close

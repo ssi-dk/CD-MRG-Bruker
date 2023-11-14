@@ -1,0 +1,87 @@
+' **************************************************************************************************** 
+' This script exports file in Bruker Data Analysis (DA) to the open mzML format. 
+'
+' 1) Open script in DA: Click Method -> Open Script Only
+' 2) Run script in DA: Click Method -> Run
+
+' 
+' 2023-11-13 Filip Ljung  
+
+' **************************************************************************************************** 
+ 
+Option explicit 'Enable strict variable checks 
+
+Dim newlineChar
+newlineChar = Chr(13) + Chr(10) 'create newline character 
+
+' **************************************************************************************************** 
+' File export options to open formats
+' **************************************************************************************************** 
+Dim SpectraType, Format
+' ## Line vs profile spectrum  
+' daLine -> line spectra 
+' daProfile -> profile spectra 
+SpectraType=daLine
+ 
+' ## Output file format
+' daMzXML -> mzXML 
+' daMzML-> mzML 
+' daMzData -> daMzData 
+Format=daMzML    
+
+' **************************************************************************************************** 
+' Functions
+' **************************************************************************************************** 
+Dim open_file, newName 
+
+' Function to setup and start a file browser modal
+Function SelectFolder() 
+    Dim shellApp, folder, folders, item 
+    Dim selectedFolder 
+ 
+    Set shellApp = CreateObject("Shell.Application") 
+    Set folder = shellApp.BrowseForFolder(0, "Select output folder", &H4000) 
+ 
+    If Not folder Is Nothing Then 
+        SelectFolder = folder.Self.Path 
+    Else 
+        SelectFolder = "" ' Return an empty string if no folder is selected 
+    End If 
+End Function 
+
+
+' **************************************************************************************************** 
+' Main script
+' **************************************************************************************************** 
+
+' ## mzML output
+Dim exportMzMl, TargetFolder
+exportMzMl = MsgBox ("Export processed file to mzML", vbYesNo + vbQuestion, "")
+If exportMzMl = vbYes Then
+    TargetFolder = SelectFolder() 
+
+    ' ## Process loaded files
+    Dim fileCount, totalFiles, fileProcMsg, savePath
+    totalFiles = Application.Analyses.Count
+    fileCount = 0
+    For Each open_file in Application.Analyses 
+        fileCount = fileCount + 1
+        If Right(open_file.Name, 2) = ".d" Then 
+            newName = Left(open_file.Name, Len(open_file.Name) - 2) 
+                ' MsgBox newName    
+            fileProcMsg = "Processing file " & fileCount & "(" & totalFiles &")" & newlineChar & newlineChar & newName & newlineChar
+            
+            If exportMzMl = vbYes Then
+                Application.ShowMessage fileProcMsg + newlineChar + "Exporting to mzML ..."  
+                savePath = TargetFolder + "\" + newName + ".mzML"
+                open_file.Export savePath, Format, SpectraType 
+            End If
+
+            Application.HideMessage 
+
+        End If 
+    Next 
+
+End If
+
+form.close
