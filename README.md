@@ -2,7 +2,7 @@
 Here we store scripts and documentation for our Bruker software
 
 ## Scripts for Data Analysis
-Tasks in Data Analysis (DA) can be automated using Bruker's Visual Basic Script integration. 
+Tasks in Data Analysis (DA) can be automated using Bruker's Visual Basic Script (VBS) integration. 
 
 To process loaded files in DA using the scripts,
 
