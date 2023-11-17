@@ -98,6 +98,7 @@ Sub Main()
     ReCalcLineSpec = MsgBox (Text, vbYesNo + vbQuestion, Title) 
 
     If ReCalcLineSpec = vbYes then 
+        ' Prompt user for SumPeak algoparameter values
         ParamSelTitle = "Peak picking parameters for Sum Peak algorithm"
         
         SignalToNoise = InputBox (signalToNoiseInfo, ParamSelTitle, SignalToNoise)
@@ -157,7 +158,7 @@ Sub Main()
                 ' Set algo for peak picking of mass spectrum signals
                 Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Defining DA masslist parameters ..."
                 open_file.Method.MassListParameters.DetectionAlgorithm = DetectionAlgorithm
-
+ 
                 ' Set algo parameters   
                 open_file.Method.MassListParameters.SameWidthAsAcquisition = SameWidthAsAcquisition
                 open_file.Method.MassListParameters.SignalToNoise = SignalToNoise
