@@ -23,7 +23,7 @@ In ProcessWithMethod you load a method file that you want to apply to all files 
 #### Editing the method file
 Open Bruker Compass MethodEditor and load the method file. Click Method -> Script to view the command run for each file, and click Method -> Parameters to view and set the parameters used by the commands. For instance, to change the parameters for the Sum Peak algorithm used to compoute the line spectra, open the file recalc_linespectra.m and then click Method -> Parameters and then click on the MassList->Sum Peak  section as shown below
 
-[](/readme_assets/compass_parameters_sumpeak.PNG)
+![compass param](readme_assets/compass_parameters_sumpeak.PNG)
 
 
 
