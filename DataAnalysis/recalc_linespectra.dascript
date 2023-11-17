@@ -90,81 +90,110 @@ End Function
 ' **************************************************************************************************** 
 ' Main script
 ' **************************************************************************************************** 
+Sub Main()
+    ' ## Set algo parameters
+    Dim Text, Title, ReCalcLineSpec, ParamSelTitle
+    Text = "Perform recalculation of line spectra? All files in the 'Analysis list' will be processed." 
+    Title = "Line spectra processing" 
+    ReCalcLineSpec = MsgBox (Text, vbYesNo + vbQuestion, Title) 
 
-' ## Set algo parameters
-Dim Text, Title, ReCalcLineSpec, ParamSelTitle
-Text = "Perform recalculation of line spectra? All files in the 'Analysis list' will be processed." 
-Title = "Line spectra processing" 
-ReCalcLineSpec = MsgBox (Text, vbYesNo + vbQuestion, Title) 
+    If ReCalcLineSpec = vbYes then 
+        ParamSelTitle = "Peak picking parameters for Sum Peak algorithm"
+        
+        SignalToNoise = InputBox (signalToNoiseInfo, ParamSelTitle, SignalToNoise)
+        If SignalToNoise = "" Then 
+            MsgBox "Script aborted.", vbExclamation, "Aborted"
+            Exit Sub
+        End If
 
-If ReCalcLineSpec = vbYes then 
-    ParamSelTitle = "Peak picking parameters for Sum Peak algorithm"
-    SignalToNoise = InputBox (signalToNoiseInfo, ParamSelTitle, SignalToNoise) 
-    RelativeThreshold = InputBox (RelativeThresholdInfo, ParamSelTitle, RelativeThreshold) 
-    AbsoluteIntensity = InputBox (AbsoluteIntensityInfo, ParamSelTitle, AbsoluteIntensity) 
+        RelativeThreshold = InputBox (RelativeThresholdInfo, ParamSelTitle, RelativeThreshold) 
+        If RelativeThreshold = "" Then 
+            MsgBox "Script aborted.", vbExclamation, "Aborted"
+            Exit Sub
+        End If
 
-    SameWidthAsAcquisition = MsgBox (SameWidthAsAcquisitionInfo, vbYesNo + vbQuestion, ParamSelTitle)
+        AbsoluteIntensity = InputBox (AbsoluteIntensityInfo, ParamSelTitle, AbsoluteIntensity) 
+        If AbsoluteIntensity = "" Then 
+            MsgBox "Script aborted.", vbExclamation, "Aborted"
+            Exit Sub
+        End If
 
-    if SameWidthAsAcquisition = vbNo Then
-        Resolution = InputBox (AbsoluteIntensityInfo, ParamSelTitle, Resolution) 
-        FWHM = InputBox (FWHMInfo, ParamSelTitle, FWHM) 
-    End If
-
-    ' ## mzML output
-    Dim exportMzMl, TargetFolder
-    exportMzMl = MsgBox ("Export processed file to mzML", vbYesNo + vbQuestion, "")
-    If exportMzMl = vbYes Then
-        TargetFolder = SelectFolder()
-    End If
-    
-    ' ## Process loaded files
-    Dim fileCount, totalFiles, fileProcMsg, savePath
-    totalFiles = Application.Analyses.Count
-    fileCount = 0
-    For Each open_file in Application.Analyses 
-        fileCount = fileCount + 1
-        If Right(open_file.Name, 2) = ".d" Then 
-            newName = Left(open_file.Name, Len(open_file.Name) - 2) 
-                ' MsgBox newName    
-            fileProcMsg = "Processing file " & fileCount & "(" & totalFiles &")" & newlineChar & newlineChar & newName & newlineChar
-            
-            Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Recalculating line spectra ..."
-                
-            ' Set algo for peak picking of mass spectrum signals
-            open_file.Method.MassListParameters.DetectionAlgorithm = DetectionAlgorithm
-
-            ' Set algo parameters   
-            open_file.Method.MassListParameters.SameWidthAsAcquisition = SameWidthAsAcquisition
-            open_file.Method.MassListParameters.SignalToNoise = SignalToNoise
-            open_file.Method.MassListParameters.AbsoluteIntensity = AbsoluteIntensity
-            open_file.Method.MassListParameters.RelativeThreshold = RelativeThreshold
-
-            ' Perform recalculation
-            open_file.RecalculateLineSpectra
-
-            ' Save new state to file
-            Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Saving ..."
-            open_file.Save
-                
-            ' MsgBox open_file.Method.MassListParameters.DetectionAlgorithm
-            ' MsgBox open_file.Method.MassListParameters.SameWidthAsAcquisition
-            ' MsgBox open_file.Method.MassListParameters.SignalToNoise
-            ' MsgBox open_file.Method.MassListParameters.AbsoluteIntensity
-            ' MsgBox open_file.Method.MassListParameters.RelativeThreshold
-            
-            If exportMzMl = vbYes Then
-                Application.ShowMessage fileProcMsg + newlineChar + "Exporting to mzML ..."  
-                savePath = TargetFolder + "\" + newName + ".mzML"
-                open_file.Export savePath, Format, SpectraType 
+        SameWidthAsAcquisition = MsgBox (SameWidthAsAcquisitionInfo, vbYesNo + vbQuestion, ParamSelTitle)
+        
+        if SameWidthAsAcquisition = vbNo Then
+            Resolution = InputBox (AbsoluteIntensityInfo, ParamSelTitle, Resolution) 
+            If Resolution = "" Then 
+                MsgBox "Script aborted.", vbExclamation, "Aborted"
+                Exit Sub
             End If
 
-            Application.HideMessage 
-    
-        End If 
-    Next 
+            FWHM = InputBox (FWHMInfo, ParamSelTitle, FWHM)
+            If FWHM = "" Then 
+                MsgBox "Script aborted.", vbExclamation, "Aborted"
+                Exit Sub
+            End If
 
-End If
+        End If
 
+        ' ## mzML output
+        Dim exportMzMl, TargetFolder
+        exportMzMl = MsgBox ("Export processed file to mzML", vbYesNo + vbQuestion, "")
+        If exportMzMl = vbYes Then
+            TargetFolder = SelectFolder()
+        End If
+        
+        ' ## Process loaded files
+        Dim fileCount, totalFiles, fileProcMsg, savePath
+        totalFiles = Application.Analyses.Count
+        fileCount = 0
+        For Each open_file in Application.Analyses 
+            fileCount = fileCount + 1
+            If Right(open_file.Name, 2) = ".d" Then 
+                newName = Left(open_file.Name, Len(open_file.Name) - 2) 
+                    ' MsgBox newName    
+                fileProcMsg = "Processing file " & fileCount & "(" & totalFiles &")" & newlineChar & newlineChar & newName & newlineChar
+                
+                
+                ' Set algo for peak picking of mass spectrum signals
+                Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Defining DA masslist parameters ..."
+                open_file.Method.MassListParameters.DetectionAlgorithm = DetectionAlgorithm
 
+                ' Set algo parameters   
+                open_file.Method.MassListParameters.SameWidthAsAcquisition = SameWidthAsAcquisition
+                open_file.Method.MassListParameters.SignalToNoise = SignalToNoise
+                open_file.Method.MassListParameters.AbsoluteIntensity = AbsoluteIntensity
+                open_file.Method.MassListParameters.RelativeThreshold = RelativeThreshold
+
+                ' Perform recalculation
+                Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Recalculating line spectra ..."
+                    
+                open_file.RecalculateLineSpectra
+
+                ' Save new state to file
+                Application.ShowMessage fileProcMsg + newlineChar + newlineChar + "Saving ..."
+                open_file.Save
+                    
+                ' MsgBox "Detection algo:" + open_file.Method.MassListParameters.DetectionAlgorithm
+                ' MsgBox "Same width:" + open_file.Method.MassListParameters.SameWidthAsAcquisition
+                ' MsgBox "Signal to noise:" + open_file.Method.MassListParameters.SignalToNoise
+                ' MsgBox "abs intensity cutoff:" + open_file.Method.MassListParameters.AbsoluteIntensity
+                ' MsgBox "relative threshold:" + open_file.Method.MassListParameters.RelativeThreshold
+                
+                If exportMzMl = vbYes Then
+                    Application.ShowMessage fileProcMsg + newlineChar + "Exporting to mzML ..."  
+                    savePath = TargetFolder + "\" + newName + ".mzML"
+                    open_file.Export savePath, Format, SpectraType 
+                End If
+
+                Application.HideMessage 
+        
+            End If 
+        Next 
+
+    End If
+End Sub
+
+' Run main script
+Main
 
 form.close
