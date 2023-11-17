@@ -19,12 +19,22 @@ These scipts require files to be imported to the DA *Analysis List*. For >10 fil
 
 - [Recalculate linespectra from profile spectra](https://github.com/ssi-dk/CD-MRG-Bruker/blob/main/DataAnalysis/recalc_linespectra.dascript) 
 
+### Methods
+These methods are intended to be used with *ProcessWithMethod* for batch processing as described below
+
+- [Recalculate linespectra from profile spectra]()
+
+- [Export to mzML]()
+
+**NOTE** If the export fails you may not have write privileges in the target directory, or the target directory does not exist.
+
 ### Batch processing
 DA is not designed to handle multiple files; loading more than 10-20 files typically causes the program to freeze. If you want to process multiple data files (e.g. a batch) using DA, the best option is to use the ***ProcessWithMethod*** program which you can start in DA by clicking *Tools > ProcessWithMethod*.  (ProcessWithMethod is a *Compass AutomationEngine script*. )
 
-![compass param](readme_assets/processwithmethod.PNG)
+![proc_with_method](readme_assets/processwithmethod.PNG)
 
 In *ProcessWithMethod* you load a ***method file*** that defines operations applied to all files in the Analysis list; click Select to add files to the Analysis list for processing. Click process to start the analysis; you cwill see the progress in the Compass DA *ProcessQueuer*. 
+
 
 #### Editing the method file
 Open the Bruker **Compass MethodEditor** app and load the method file by clicking *Method > Open*. 
@@ -33,10 +43,14 @@ Open the Bruker **Compass MethodEditor** app and load the method file by clickin
 Click *Method > Script* to view the commands/methods/algorithms that will be executed for each file when the method is run.
 Click *Method > Parameters* to view and set the parameters associated with commands/methods. 
 
-##### Example
-to change the parameters for the Sum Peak algorithm used to compuute the line spectra (i.e. the spectral centroids of the profile spectra), open the file 'recalc_linespectra.m and then click Method -> Parameters and then click on the MassList->Sum Peak  section as shown below
+##### `recalc_linespectra.m` parameters
+Open the method file in MethodEditor. To change the parameters for the Sum Peak algorithm used to compuute the line spectra (i.e. the spectral centroids of the profile spectra), open the file `recalc_linespectra.m` and then click *Method -> Parameters* and then click on the *MassList > Sum Peak* section as shown below
 
-![compass param](readme_assets/compass_parameters_sumpeak.PNG)
+- ![compass param](readme_assets/compass_parameters_sumpeak.PNG)
+
+
+##### `export_to_mzml.m`
+Open the method file in MethodEditor. To change the output directory, open the script by clicking *Method > Script*
 
 
 
