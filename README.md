@@ -2,7 +2,7 @@
 Code and documentation pertaining to Bruker software for LC-MS data. 
 
 ## Source 
-Metabolomics Research Group, department of Congenital Diseases at Statens Serum Institite (SSI) Denmark.
+Metabolomics Research Group, department of Congenital Diseases at Statens Serum Institute (SSI) Denmark.
 
 ## Bruker Data Analysis 
 Tasks in **Data Analysis (DA)** can be automated using the Visual Basic Script (VBS) api. 
